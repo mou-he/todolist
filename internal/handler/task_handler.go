@@ -45,7 +45,8 @@ func (h *TaskHandler) List(c *gin.Context) {
 	}
 	tasks, total, err := h.taskService.GetTasks(page, size)
 	if err != nil {
-		response.Error(c, "创建失败请稍后重试")
+		response.Error(c, "查询失败，请稍后重试")
+		return
 	}
 	response.Success(c, gin.H{"task": tasks, "total": total})
 
@@ -54,10 +55,11 @@ func (h *TaskHandler) GetTaskById(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
 		response.Error(c, "id转换失败")
+		return
 	}
 	task, err := h.taskService.GetTaskById(uint(id))
 	if err != nil {
-		response.Error(c, "创建失败，请稍后重试")
+		response.Error(c, "查询失败，请稍后重试")
 		return
 	}
 	response.Success(c, gin.H{"task": task})

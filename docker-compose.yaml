@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  # ---------- MySQL 数据库 ----------
+  mysql:
+    image: mysql:8.0
+    container_name: todo-mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: 123456
+      MYSQL_DATABASE: todo_db
+      MYSQL_USER: todo_user
+      MYSQL_PASSWORD: 123456
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./storage/mysql_data:/var/lib/mysql
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-p123456"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------- Redis 缓存 ----------
+  redis:
+    image: redis:7.0-alpine
+    container_name: todo-redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./storage/redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---------- Go 应用（你的 Gin 项目） ----------
+  app:
+    build: .
+    container_name: todo-app
+    restart: always
+    ports:
+      - "8080:8080"
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      # 核心：通过环境变量覆盖 config.yaml 里的配置（Viper 会自动识别）
+      - SERVER_PORT=8080
+      - DATABASE_DSN=root:123456@tcp(mysql:3306)/todo_db?charset=utf8mb4&parseTime=True&loc=Local
+      - REDIS_ADDR=redis:6379
+      - REDIS_PASSWORD=
+      - LOG_LEVEL=info
+    volumes:
+      - ./storage/logs:/app/logs   # 挂载日志目录，方便宿主机查看

@@ -30,7 +30,7 @@ func (t *taskRepository) GetByID(id uint) (*model.Task, error) {
 	var task model.Task
 	err := t.db.First(&task, id).Error
 	if errors.Is(err, gorm.ErrRecordNotFound) {
-		return nil, nil
+		return nil, gorm.ErrRecordNotFound
 	}
 	return &task, nil
 }
