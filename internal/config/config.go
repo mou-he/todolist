@@ -10,6 +10,7 @@ type Config struct {
 	Server   ServerConfig   `mapstructure:"server"`
 	Database DatabaseConfig `mapstructure:"database"`
 	Redis    RedisConfig    `mapstructure:"redis"`
+	Log      LogConfig      `mapstructure:"log"`
 }
 
 type ServerConfig struct {
@@ -25,6 +26,11 @@ type RedisConfig struct {
 	Addr     string `mapstructure:"addr"`
 	Password string `mapstructure:"password"`
 	DB       int    `mapstructure:"db"`
+}
+type LogConfig struct {
+	Level       string `mapstructure:"level"`
+	OutputPath string `mapstructure:"output_path"`
+	Format     string `mapstructure:"format"`
 }
 
 // Load 是唯一暴露给外部的初始化函数

@@ -4,10 +4,13 @@ import (
 	"github/mouhe/todolist/internal/config"
 	"github/mouhe/todolist/internal/database"
 	"github/mouhe/todolist/internal/handler"
+	"github/mouhe/todolist/internal/middleware"
+	"github/mouhe/todolist/internal/pkg/logger"
 	"github/mouhe/todolist/internal/repository"
 	"github/mouhe/todolist/internal/service"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -15,15 +18,23 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	logger.InitLogger(logger.LogConfig{
+		Level:      cfg.Log.Level,
+		OutputPath: cfg.Log.OutputPath,
+		Format:     cfg.Log.Format,
+	})
+	defer logger.Log.Sync() // 确保日志缓冲区的日志被写出
 	db, err := database.InitMySQL(cfg.Database.DSN)
 	if err != nil {
-		panic(err)
+		logger.Log.Fatal("Failed to connect to database", zap.Error(err))
 	}
+	logger.Log.Info("Database connection established")
 	taskrepo := repository.NewTaskRepository(db)
 	taskservice := service.NewTaskService(taskrepo)
 	taskHandler := handler.NewTaskHandler(taskservice)
 	router := gin.Default()
 	v1 := router.Group("/api/v1")
+	v1.Use(middleware.Logger())
 	{
 		v1.GET("/tasks", taskHandler.List)
 		v1.POST("/tasks", taskHandler.Create)
