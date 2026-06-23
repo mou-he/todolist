@@ -28,9 +28,14 @@ func main() {
 	if err != nil {
 		logger.Log.Fatal("Failed to connect to database", zap.Error(err))
 	}
+	redisClient, err := database.InitRedis(cfg.Redis.Addr, cfg.Redis.Password, cfg.Redis.DB)
+	if err != nil {
+		logger.Log.Fatal("Failed to connect to redis", zap.Error(err))
+	}
+	defer redisClient.Close()
 	logger.Log.Info("Database connection established")
 	taskrepo := repository.NewTaskRepository(db)
-	taskservice := service.NewTaskService(taskrepo)
+	taskservice := service.NewTaskService(taskrepo, redisClient)
 	taskHandler := handler.NewTaskHandler(taskservice)
 	router := gin.Default()
 	v1 := router.Group("/api/v1")

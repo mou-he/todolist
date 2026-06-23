@@ -5,6 +5,7 @@ import (
 	"github/mouhe/todolist/internal/pkg/response"
 	"github/mouhe/todolist/internal/service"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
@@ -19,17 +20,23 @@ func NewTaskHandler(s *service.TaskService) *TaskHandler {
 }
 func (h *TaskHandler) Create(c *gin.Context) {
 	var req struct {
-		Title    string `json:"title" binding:"required"`
-		Desc     string `json:"description"`
-		Priority int    `json:"priority"`
+		Title     string    `json:"title" binding:"required"`
+		Desc      string    `json:"description"`
+		Priority  int       `json:"priority"`
+		Deadline  time.Time `json:"deadline"`
+		CreatedAt time.Time `json:"created_at"`
 	}
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Warn("Failed to bind request body", zap.Error(err))
 		response.ValidationError(c, "参数格式错误: "+err.Error())
 		return
 	}
+	if req.Deadline.IsZero() {
+		req.Deadline = time.Now().Add(24 * time.Hour) // 默认截止时间为24小时后
+	}
 	logger.Info("Creating task", zap.String("title", req.Title), zap.Int("priority", req.Priority))
-	task, err := h.taskService.CreateTask(req.Title, req.Desc, req.Priority)
+	task, err := h.taskService.CreateTask(req.Title, req.Desc, req.Priority, req.Deadline)
 	if err != nil {
 		logger.Error("Failed to create task", zap.Error(err))
 		response.Error(c, "创建失败，请稍后重试")
@@ -86,10 +93,11 @@ func (h *TaskHandler) Update(c *gin.Context) {
 		return
 	}
 	var req struct {
-		Title       string `json:"title"`
-		Description string `json:"description"`
-		Priority    int    `json:"priority"`
-		Status      string `json:"status"`
+		Title       string    `json:"title"`
+		Description string    `json:"description"`
+		Priority    int       `json:"priority"`
+		Status      string    `json:"status"`
+		Deadline    time.Time `json:"deadline"`
 	}
 	if err := c.ShouldBindJSON(&req); err != nil {
 		logger.Warn("Failed to bind request body", zap.Error(err))
@@ -115,6 +123,10 @@ func (h *TaskHandler) Update(c *gin.Context) {
 	if req.Status != "" {
 		task.Status = req.Status
 	}
+	if req.Deadline != (time.Time{}) {
+		task.Deadline = req.Deadline
+	}
+	task.UpdatedAt = time.Now()
 	if err := h.taskService.Update(task); err != nil {
 		logger.Error("Failed to update task", zap.Int("task_id", id), zap.Error(err))
 		response.Error(c, "更新失败，请稍后重试")

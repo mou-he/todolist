@@ -1,0 +1,20 @@
+server:
+  port: ":8080"
+  mode: "debug"
+
+database:
+  dsn: "root:123456@tcp(mysql:3306)/todo_db?charset=utf8mb4&parseTime=True&loc=Local&timeout=30s&readTimeout=30s&writeTimeout=30s"
+
+redis:
+  addr: "redis:6379"          # 使用 Compose 服务名（不是容器名）
+  password: ""
+  db: 0
+
+log:
+  level: "info"
+  output_path: "./storage/logs/todolist.log"       # 输出到控制台，与 Docker 日志集成
+  format: "text"
+
+jwt:
+  secret: "your-secret-key-change-in-production"
+  expire_hours: 24

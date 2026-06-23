@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"runtime"
 	"sync"
 
 	"go.uber.org/zap"
@@ -95,18 +94,13 @@ func InitLogger(cfg LogConfig) {
 // initFileWriter 初始化文件写入器
 func initFileWriter(outputPath string, writer *zapcore.WriteSyncer) {
 	file, err := os.OpenFile(outputPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
-	defer func() {
-		file.Close()
-	}()
 	if err != nil {
 		fmt.Printf("Failed to open log file %s: %v, falling back to stdout\n", outputPath, err)
 		*writer = zapcore.AddSync(os.Stdout)
 		return
 	}
 	*writer = zapcore.NewMultiWriteSyncer(zapcore.AddSync(os.Stdout), zapcore.AddSync(file))
-	runtime.SetFinalizer(file, func(f *os.File) {
-		f.Close()
-	})
+
 }
 
 // Debug 调试级别日志

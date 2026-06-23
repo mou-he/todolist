@@ -27,7 +27,7 @@ func InitMySQL(dsn string) (*gorm.DB, error) {
 		return nil, fmt.Errorf("get sql.DB failed: %w", err)
 	}
 
-	sqlDB.SetMaxOpenConns(100)                 // 最大打开连接数
+	sqlDB.SetMaxOpenConns(45)                  // 最大打开连接数
 	sqlDB.SetMaxIdleConns(20)                  // 最大空闲连接数
 	sqlDB.SetConnMaxLifetime(time.Hour)        // 连接最大存活时间
 	sqlDB.SetConnMaxIdleTime(30 * time.Minute) // 连接最大空闲时间
